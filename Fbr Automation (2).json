@@ -1,0 +1,779 @@
+{
+  "name": "Fbr Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-3",
+              "name": "adminEmail",
+              "value": "sanafaisal4477@gmail.com",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "fbrGuidelines",
+              "value": "FBR tax filing guidelines: 1. All income must be declared. 2. Valid CNIC and NTN required. 3. Bank details must match registered information. 4. Invoices must be authentic and verifiable.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "0bc560e0-af4e-4349-83b1-7d3d052e05b0",
+      "name": "Workflow Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -28000,
+        3984
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "taxpayerName",
+              "value": "={{ $('FBR Tax Form Trigger').item.json['Taxpayer Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "cnic",
+              "value": "={{ $('FBR Tax Form Trigger').item.json['CNIC Number (e.g., 12345-6789012-3)'] }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "ntn",
+              "value": "={{ $('FBR Tax Form Trigger').item.json['NTN Number'] }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "income",
+              "value": "={{ $('FBR Tax Form Trigger').item.json['Annual Income (PKR)'] }}",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "invoices",
+              "value": "={{ $('FBR Tax Form Trigger').item.json['Invoice Numbers (comma separated)'] }}",
+              "type": "string"
+            },
+            {
+              "id": "id-6",
+              "name": "bankAccount",
+              "value": "={{ $('FBR Tax Form Trigger').item.json['Bank Account Number (IBAN)'] }}",
+              "type": "string"
+            },
+            {
+              "id": "id-7",
+              "name": "validationStatus",
+              "value": "Validated",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "b8677b27-d68b-45e5-9d01-32d34a2751c1",
+      "name": "Prepare Tax Form Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -26448,
+        3952
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI Tax Filing Assistant for FBR Pakistan. Based on the following taxpayer data, auto-fill and validate the tax form:\n\nTaxpayer Name: {{ $json.taxpayerName }}\nCNIC: {{ $json.cnic }}\nNTN: {{ $json.ntn }}\nIncome: {{ $json.income }}\nInvoices: {{ $json.invoices }}\nBank Account: {{ $json.bankAccount }}\n\nPlease:\n1. Calculate the tax amount based on income (use 10% tax rate for simplicity)\n2. Validate all invoice numbers are in correct format (INV-XXXXX)\n3. Generate a tax filing summary\n4. Return the result as JSON with fields: taxAmount, invoiceValidation, filingSummary, filingStatus",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a professional tax filing assistant. Always return valid JSON format."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "904def07-f398-447a-815d-28f36321e278",
+      "name": "AI Tax Filing Assistant",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -26144,
+        3952
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI Fraud Detection system for FBR Pakistan. Analyze the following data for potential fraud:\n\nTaxpayer Data:\n{{ JSON.stringify($('Prepare Tax Form Data').item.json) }}\n\nTax Filing Result:\n{{ $json.text }}\n\nCheck for:\n1. Mismatched invoice numbers or patterns\n2. Unrealistic income declarations\n3. Suspicious bank account patterns\n4. Any anomalies in the data\n\nReturn JSON with: fraudDetected (boolean), fraudScore (0-100), fraudReasons (array), recommendation",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You must return ONLY valid JSON with the fields: fraudDetected, fraudScore, fraudReasons, recommendation. No explanation. No markdown. No extra text. Only JSON."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "9304a543-25ed-49ee-aac8-df105189677d",
+      "name": "AI Fraud Detection",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -25632,
+        3600
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI Support Chatbot for FBR Pakistan taxpayers. Answer the following query based on FBR guidelines:\n\nTaxpayer Query: {{ $('FBR Tax Form Trigger').item.json['Any Questions? (Optional)'] || 'How do I file my taxes?' }}\n\nFBR Guidelines:\n{{ $('Workflow Configuration').item.json.fbrGuidelines }}\n\nProvide a helpful, clear, and professional response.",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a helpful FBR support assistant. Be professional and provide accurate information based on guidelines."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "5d0dd984-c551-4daf-8699-66d97486b3e7",
+      "name": "AI Support Chatbot",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -25632,
+        4256
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {
+          "includeUnpaired": false
+        }
+      },
+      "id": "ba24adca-0f52-4111-96e1-6316f34a3f28",
+      "name": "Merge All Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -25136,
+        3952
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate a comprehensive HTML tax summary report based on the following data:\n\nTaxpayer Name: {{ $('Prepare Tax Form Data').item.json.taxpayerName }}\nCNIC: {{ $('Prepare Tax Form Data').item.json.cnic }}\nNTN: {{ $('Prepare Tax Form Data').item.json.ntn }}\nIncome: {{ $('Prepare Tax Form Data').item.json.income }}\n\nTax Filing Result:\n{{ $('AI Tax Filing Assistant').item.json.text }}\n\nFraud Detection Analysis:\n{{ $('AI Fraud Detection').item.json.text }}\n\nSupport Chatbot Response:\n{{ $('AI Support Chatbot').item.json.text }}\n\nCreate a professional HTML email report with:\n1. Header with FBR logo placeholder\n2. Taxpayer Information Summary\n3. Tax Filing Status and Results\n4. Fraud Detection Results (highlight if fraud detected)\n5. Support Response\n6. Next Steps and Recommendations\n\nUse proper HTML formatting with colors, tables, and styling for professional appearance.",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a professional HTML report generator for FBR Pakistan. Create well-formatted, visually appealing HTML reports suitable for email. Use tables, colors (green for success, red for warnings), and clear sections. Return ONLY the HTML code, no markdown, no explanations."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "2f2037a3-ddf4-4dfa-b1f8-ca27b265418d",
+      "name": "Generate Summary Report",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -24864,
+        3952
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Workflow Configuration').item.json.adminEmail }}",
+        "subject": "=FBR Admin Report - {{ $('Prepare Tax Form Data').item.json.taxpayerName }}",
+        "message": "=+{{ $input.item.json.text }}",
+        "options": {}
+      },
+      "id": "31eadf32-6929-4ab1-b695-c3012fd7fa46",
+      "name": "Send Email Report",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -24336,
+        3952
+      ],
+      "webhookId": "c2814cf8-5d74-41b3-9fc6-990dd2e0dd0b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ibJqnJcmsTl2bkO1",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('FBR Tax Form Trigger').item.json['Email Address'] }}",
+        "subject": "=FBR Tax Filing Report - {{ $('Prepare Tax Form Data').item.json.taxpayerName }}",
+        "message": "={{ $json.text }}",
+        "options": {}
+      },
+      "id": "73c13404-214f-4987-864b-3f1f88920656",
+      "name": "Send Tax Update Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -24880,
+        3568
+      ],
+      "webhookId": "7dddb75f-756d-49d0-b010-e2b554e2ec48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ibJqnJcmsTl2bkO1",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "FBR Tax Filing Form",
+        "formDescription": "Submit your tax information for automated processing by FBR Pakistan",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Taxpayer Name",
+              "placeholder": "Enter your name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "CNIC Number (e.g., 12345-6789012-3)",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "NTN Number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Annual Income (PKR)",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Invoice Numbers (comma separated)",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Bank Account Number (IBAN)",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email Address",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Any Questions? (Optional)",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {
+          "buttonLabel": "Submit Tax Information",
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Thank you! Your tax filing is being processed. You will receive an email confirmation shortly."
+            }
+          }
+        }
+      },
+      "id": "1637048d-e86a-4bde-a3b7-0a3c1c4c24a3",
+      "name": "FBR Tax Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -28304,
+        3984
+      ],
+      "webhookId": "cb7c340f-dd03-4f92-9874-88c7d9748c60"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "appB0hSJFvRffANiO"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl5CPh4tQIEXol4T",
+          "mode": "id"
+        },
+        "filterByFormula": "={CNIC} = '{{ $('FBR Tax Form Trigger').item.json['CNIC Number (e.g., 12345-6789012-3)'] }}'",
+        "returnAll": false,
+        "limit": 1,
+        "options": {}
+      },
+      "id": "66c6a3bc-fff4-490d-8d76-ea4cc0b11ced",
+      "name": "Validate CNIC",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -27504,
+        3728
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "pxp0AxCRxjmZErnX",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "appB0hSJFvRffANiO"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblH0YJ23bZyL0ZeH",
+          "mode": "id"
+        },
+        "filterByFormula": "={NTN} = '{{ $('FBR Tax Form Trigger').item.json['NTN Number'] }}'",
+        "returnAll": false,
+        "limit": 1,
+        "options": {}
+      },
+      "id": "aefa29d1-bde3-4936-add8-bd21083a3a38",
+      "name": "Validate NTN",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -27488,
+        4000
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "pxp0AxCRxjmZErnX",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "appB0hSJFvRffANiO"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbleGsPincvmcD2bY",
+          "mode": "id"
+        },
+        "filterByFormula": "={BankAccount} = '{{ $('FBR Tax Form Trigger').item.json['Bank Account Number (IBAN)'] }}'",
+        "returnAll": false,
+        "limit": 1,
+        "options": {}
+      },
+      "id": "6be51fb3-a542-4276-b08d-55789223cf05",
+      "name": "Validate Bank Account",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -27488,
+        4288
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "pxp0AxCRxjmZErnX",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $('Validate CNIC').all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "id-2",
+              "leftValue": "={{ $('Validate NTN').all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "id-3",
+              "leftValue": "={{ $('Validate Bank Account').all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "87e1db4b-f26b-4877-8094-6d4113f9e56d",
+      "name": "Check All Validations",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -26752,
+        3968
+      ]
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -27024,
+        3952
+      ],
+      "id": "ac9e56f2-28de-4b77-a14e-0d72df797f84",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        -26144,
+        4352
+      ],
+      "id": "24258513-1b1f-4cff-a13f-ad3400e79d60",
+      "name": "Cohere Chat Model",
+      "credentials": {
+        "cohereApi": {
+          "id": "RT3OgaDulz8D4Opb",
+          "name": "NEWAPI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        -25632,
+        4512
+      ],
+      "id": "553a327d-6891-4c9e-a84c-f7c667f348eb",
+      "name": "Cohere Chat Model1",
+      "credentials": {
+        "cohereApi": {
+          "id": "RT3OgaDulz8D4Opb",
+          "name": "NEWAPI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        -24864,
+        4304
+      ],
+      "id": "fc225dc1-0f54-45f4-858f-88e20781f583",
+      "name": "Cohere Chat Model2",
+      "credentials": {
+        "cohereApi": {
+          "id": "RT3OgaDulz8D4Opb",
+          "name": "NEWAPI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        -25632,
+        3840
+      ],
+      "id": "2418a6de-4e29-408e-b9c2-c45e57f8e996",
+      "name": "Cohere Chat Model3",
+      "credentials": {
+        "cohereApi": {
+          "id": "RT3OgaDulz8D4Opb",
+          "name": "NEWAPI"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Prepare Tax Form Data": {
+      "main": [
+        [
+          {
+            "node": "AI Tax Filing Assistant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Tax Filing Assistant": {
+      "main": [
+        [
+          {
+            "node": "AI Fraud Detection",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Support Chatbot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Fraud Detection": {
+      "main": [
+        [
+          {
+            "node": "Merge All Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Generate Summary Report": {
+      "main": [
+        [
+          {
+            "node": "Send Email Report",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Tax Update Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FBR Tax Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration": {
+      "main": [
+        [
+          {
+            "node": "Validate CNIC",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Validate NTN",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Validate Bank Account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate CNIC": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Validate NTN": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Check All Validations": {
+      "main": [
+        [
+          {
+            "node": "Prepare Tax Form Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Support Chatbot": {
+      "main": [
+        [
+          {
+            "node": "Merge All Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Bank Account": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Check All Validations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge All Results": {
+      "main": [
+        [
+          {
+            "node": "Generate Summary Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Tax Update Email": {
+      "main": [
+        [
+          {
+            "node": "Send Email Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cohere Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Tax Filing Assistant",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cohere Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Support Chatbot",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cohere Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Summary Report",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cohere Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Fraud Detection",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f651801f-33db-4da2-87fb-359a07c6a8e2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e6cad01eb615690b3f444fab4e8074c430079080b792ca86524e022973d7ee07"
+  },
+  "id": "I4TemAiM1AqRI2gQ",
+  "tags": []
+}
